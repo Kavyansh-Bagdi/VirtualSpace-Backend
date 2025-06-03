@@ -15,12 +15,12 @@ function verifyPassword(hashPassword: string, password: string): boolean {
 }
 
 function genToken(name: string, email: string): string {
-  return jwt.sign({ name, email }, process.env.PRIVATE_KEY);
+  return jwt.sign({ name, email }, process.env.PRIVATE_KEY,{ expiresIn: "24h" });
 }
 
 function verifytoken(token: string): boolean {
   try {
-    jwt.verify(token, process.env.PRIVATE_KEY as string, { expiresIn: "24h" });
+    jwt.verify(token, process.env.PRIVATE_KEY as string);
     return true;
   } catch (err) {
     return false;

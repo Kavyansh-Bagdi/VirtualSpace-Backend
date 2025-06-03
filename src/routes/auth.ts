@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import { genPassword, genToken, verifyPassword } from "../controllers/password";
 import prisma from "../prisma";
-const authRouter = express();
+const authRouter = express.Router();
 
 authRouter.post(
   "/signup",
@@ -10,7 +10,7 @@ authRouter.post(
     let userEmail = "";
     try {
       const signUpForm = req.body;
-
+      console.log(req.body);
       const existingUser = await prisma.user.findUnique({
         where: { email: signUpForm.email },
       });
@@ -62,7 +62,7 @@ authRouter.post(
   async (req: Request, res: Response): Promise<void> => {
     try {
       const loginFormData = req.body;
-
+      console.log(req.body);
       const userData = await prisma.user.findFirst({
         where: {
           email: loginFormData.email,
