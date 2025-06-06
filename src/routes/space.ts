@@ -16,54 +16,56 @@ export function setupSpaceSocket(io: Server) {
   const spaceNamespace = io.of("/space");
 
   spaceNamespace.on("connection", (socket: Socket) => {
-    console.log(players);
-    console.log(`Socket connected to /space: ${socket.id}`);
-
     socket.on("join", (name: string) => {
       players.push({
         socketId: socket.id,
         name,
         level: 0,
-        coordinate: { x: 100, y: 100 },
+        coordinate: { x: 16, y: 16 },
       });
-      console.log(players);
-      console.log(`Player joined: ${name} (${socket.id})`);
       io.emit("update", players);
     });
 
     socket.on("disconnect", () => {
       players = players.filter((player) => player.socketId !== socket.id);
-      console.log(players);
       console.log(`Player disconnected: ${socket.id}`);
     });
 
     socket.on("left_movement", () => {
       const player = players.find((p) => p.socketId === socket.id);
-      console.log(players);
-      if (player) player.coordinate.x -= 5;
+      if (player){
+        player.coordinate.x -= 1;
+        if(player.coordinate.x < 16) player.coordinate.x = 16
+      }
     });
 
     socket.on("right_movement", () => {
       const player = players.find((p) => p.socketId === socket.id);
-      console.log(players);
-      if (player) player.coordinate.x += 5;
+       if (player){
+        player.coordinate.x += 1;
+        if(player.coordinate.x > 304) player.coordinate.x = 304
+      }
+      
     });
 
     socket.on("up_movement", () => {
       const player = players.find((p) => p.socketId === socket.id);
-      console.log(players);
-      if (player) player.coordinate.y -= 5;
+      if (player){
+        player.coordinate.y -= 1;
+        if(player.coordinate.y < 16 ) player.coordinate.y = 16
+      }
     });
 
     socket.on("down_movement", () => {
       const player = players.find((p) => p.socketId === socket.id);
-      console.log(players);
-      if (player) player.coordinate.y += 5;
+       if (player){
+        player.coordinate.y += 1;
+        if(player.coordinate.y > 304) player.coordinate.y = 304
+      }
     });
   });
 
   setInterval(() => {
     spaceNamespace.emit("update", players);
-    // console.log("Emitting update to /space", players,"Date : ",Date());
   }, 15);
 }
