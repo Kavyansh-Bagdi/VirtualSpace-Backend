@@ -1,20 +1,32 @@
-// Imports
 import express from "express";
-import authRouter from "./routes/auth";
-import spaceRouter from "./routes/space";
+import http from "http";
 import cors from "cors";
+import { Server } from "socket.io";
+import authRouter from "./routes/auth";
+import { setupSpaceSocket } from "./routes/space"; 
 
 const app = express();
 
-// Middlewares
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true
+}));
 app.use(express.json());
 
-// Routers
 app.use("/auth", authRouter);
-app.use("/space",spaceRouter);
 
+const server = http.createServer(app);
 
-app.listen(process.env.PORT, () => {
-  console.log(`Server Starting at Port : ${process.env.PORT}`);
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5173",
+    credentials: true
+  }
+});
+
+setupSpaceSocket(io);
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
 });

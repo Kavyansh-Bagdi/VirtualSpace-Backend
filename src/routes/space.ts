@@ -1,31 +1,69 @@
-import http from "http";
-import express from "express";
-import { Server } from "socket.io";
-import authentication from "../middlewares/authenticated";
-import { Request, Response, NextFunction } from "express";
-import { Socket } from "dgram";
+import { Server, Socket } from "socket.io";
 
-const spaceRouter = express.Router();
+interface Player {
+  socketId: string;
+  name: string;
+  level: number;
+  coordinate: {
+    x: number;
+    y: number;
+  };
+}
 
-spaceRouter.use(
-  authentication as (req: Request, res: Response, next: NextFunction) => void
-);
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
+let players: Player[] = [];
 
-spaceRouter.get("/", (req: Request, res: Response) => {
-  res
-    .status(200)
-    .json({
-      message: "User is authenticated and has access to the space route.",
+export function setupSpaceSocket(io: Server) {
+  const spaceNamespace = io.of("/space");
+
+  spaceNamespace.on("connection", (socket: Socket) => {
+    console.log(players);
+    console.log(`Socket connected to /space: ${socket.id}`);
+
+    socket.on("join", (name: string) => {
+      players.push({
+        socketId: socket.id,
+        name,
+        level: 0,
+        coordinate: { x: 100, y: 100 },
+      });
+      console.log(players);
+      console.log(`Player joined: ${name} (${socket.id})`);
+      io.emit("update", players);
     });
-});
 
-io.on("connection", (socket) => {
-  console.log(`New Connection ! , ${socket}`);
-  socket.on("disconnect", () => {
-    console.log("user disconnected");
+    socket.on("disconnect", () => {
+      players = players.filter((player) => player.socketId !== socket.id);
+      console.log(players);
+      console.log(`Player disconnected: ${socket.id}`);
+    });
+
+    socket.on("left_movement", () => {
+      const player = players.find((p) => p.socketId === socket.id);
+      console.log(players);
+      if (player) player.coordinate.x -= 5;
+    });
+
+    socket.on("right_movement", () => {
+      const player = players.find((p) => p.socketId === socket.id);
+      console.log(players);
+      if (player) player.coordinate.x += 5;
+    });
+
+    socket.on("up_movement", () => {
+      const player = players.find((p) => p.socketId === socket.id);
+      console.log(players);
+      if (player) player.coordinate.y -= 5;
+    });
+
+    socket.on("down_movement", () => {
+      const player = players.find((p) => p.socketId === socket.id);
+      console.log(players);
+      if (player) player.coordinate.y += 5;
+    });
   });
-});
-export default spaceRouter;
+
+  setInterval(() => {
+    spaceNamespace.emit("update", players);
+    // console.log("Emitting update to /space", players,"Date : ",Date());
+  }, 15);
+}
